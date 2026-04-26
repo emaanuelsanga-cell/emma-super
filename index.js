@@ -1,5 +1,4 @@
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode-terminal');
 const axios = require('axios');
 const express = require('express');
 
@@ -110,23 +109,37 @@ async function startBot() {
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true,
+    printQRInTerminal: false,
     browser: [BOT_NAME, "Chrome", "3.0"]
   });
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', (u) => {
-    if (u.connection === 'close') {
-      if (u.lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+  sock.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect } = update;
+
+    // 🔁 reconnect
+    if (connection === 'close') {
+      if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
         startBot();
       }
-    } else if (u.connection === 'open') {
+    }
+
+    // ✅ connected
+    if (connection === 'open') {
       console.log('✅ BOT IMEWAKA');
 
-      sock.sendMessage(OWNER, {
-        text: `*${BOT_NAME}* imewaka sasa 🔥`
+      await sock.sendMessage(OWNER, {
+        text: `*${BOT_NAME}* imeunganishwa sasa 🔥`
       });
+    }
+
+    // 🔥 PAIRING CODE
+    if (!sock.authState.creds.registered) {
+      const phoneNumber = "255767094210"; // badilisha kama ni tofauti
+      const code = await sock.requestPairingCode(phoneNumber);
+
+      console.log(`\n📲 PAIRING CODE: ${code}\n`);
     }
   });
 
