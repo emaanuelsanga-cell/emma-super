@@ -1,7 +1,10 @@
+{
   "name": "emma-bot-premium",
   "version": "3.0.0",
   "main": "index.js",
-  "scripts": { "start": "node index.js" },
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "@whiskeysockets/baileys": "latest",
     "qrcode-terminal": "^0.12.0",
