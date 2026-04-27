@@ -115,17 +115,22 @@ async function startBot() {
 
   sock.ev.on('creds.update', saveCreds);
 
+  let pairingRequested = false; // 🔥 kuzuia kuomba code mara nyingi
+
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect } = update;
 
-    // 🔁 reconnect
     if (connection === 'close') {
       if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+        console.log("🔁 Ina-reconnect...");
         startBot();
       }
     }
 
-    // ✅ connected
+    if (connection === 'connecting') {
+      console.log("🔄 Inaunganisha WhatsApp...");
+    }
+
     if (connection === 'open') {
       console.log('✅ BOT IMEWAKA');
 
@@ -134,12 +139,18 @@ async function startBot() {
       });
     }
 
-    // 🔥 PAIRING CODE
-    if (!sock.authState.creds.registered) {
-      const phoneNumber = "255767094210"; // badilisha kama ni tofauti
-      const code = await sock.requestPairingCode(phoneNumber);
+    // 🔥 FIX KUBWA (delay + condition sahihi)
+    if (connection === 'connecting' && !sock.authState.creds.registered && !pairingRequested) {
+      pairingRequested = true;
 
-      console.log(`\n📲 PAIRING CODE: ${code}\n`);
+      setTimeout(async () => {
+        try {
+          const code = await sock.requestPairingCode("255767094210");
+          console.log(`\n📲 PAIRING CODE: ${code}\n`);
+        } catch (err) {
+          console.log("❌ Imeshindikana kupata pairing code, redeploy tena");
+        }
+      }, 6000); // delay muhimu
     }
   });
 
